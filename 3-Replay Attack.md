@@ -167,15 +167,7 @@ O **Cetus Hack (2025)** mostra que **um “detalhe” matemático** sem *guard* 
 
 > ❓ **Para a turma:** *Quais campos (exatos) você incluiria no hash de unicidade da sua ponte — e onde gravaria a marcação `processed`?*
 
----
 
-## **Apêndice — Formatação sugerida (se for para .docx/PDF)**
-
-* **Título:** Arial 16 pt, **negrito**, centralizado, azul-escuro (#003087).
-* **Subtítulos (H2/H3):** Arial 14/12 pt, **negrito**.
-* **Corpo:** Arial 12 pt, justificado, 1,15.
-* **Código:** Consolas 10 pt, fundo cinza-claro (#F4F6F8), borda fina, recuo 1 cm.
-* **Callouts (💡/⚠️/✅):** itálico, cinza #555; caixas “**Lição aprendida**”.
 
 ---
 

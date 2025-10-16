@@ -1,6 +1,4 @@
-Aqui está o seu **artigo revisado, padronizado e “mais bonito”**, com linguagem clara, headings consistentes, blocos de código em Solidity, bullets objetivos e transições suaves — pronto para usar em slides, PDF ou .docx.
 
----
 
 # **Artigo: O Ataque de Reentrância em Smart Contracts**
 
