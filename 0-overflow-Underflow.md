@@ -1,202 +1,196 @@
+# 🔢 **Construindo Web3 Segura: Overflow/Underflow e Erros Aritméticos em Smart Contracts**
 
+> *"Quando a matemática falha na blockchain, o cofre vira peneira!"*  
+> — *Inspirado por Hacken: "Hackers evoluem, mas devs preparados vencem!"* 🛡️
 
-# **Artigo: Overflow/Underflow e Erros Aritméticos em Smart Contracts**
-
-### **Um Mergulho Profundo no BeautyChain (BEC) Hack e Outros Casos**
-
-> **Em uma frase:** quando a matemática falha no on-chain, o cofrezinho vira peneira.
-
----
-
-## **Introdução — O Odômetro Quebra-Cabeças da Web3**
-
-Em **2025**, *smart contracts* são os alicerces da **Web3**, administrando dezenas de bilhões em **DeFi, NFTs e dApps** em redes como **Ethereum** e **BNB Chain**, com **> US$ 200 bilhões** em **TVL** (*estimativas citadas*). Pense neles como **calculadoras de alta precisão**: se a conta erra, tudo desanda. É o “odômetro” que volta a zero ao atingir o limite — e *overflow/underflow* fazem exatamente isso no nível binário.
-
-No **OWASP Smart Contract Top 10 2025**, *overflow/underflow* e **erros aritméticos** aparecem junto de **validação insuficiente (A02)** como uma das classes **mais críticas**. Em **2024**, essas falhas responderam por **~20% dos hacks**, somando **~US$ 223 milhões** em perdas (*estimativas citadas*). Embora o **Solidity 0.8+** tenha introduzido **checagens nativas** contra *overflow/underflow*, **erros de arredondamento** e **contabilidade de shares/juros/taxas** seguem perigosos — e alvos fáceis, pois o código é público.
-
-> 💡 **Piada para aquecer a turma:** *Overflow é como ganhar “carro zero” toda vez que o odômetro estoura — e tem atacante que adora concessionária on-chain.*
+Em **2025**, a Web3 é o alicerce da economia digital, gerenciando **mais de US$ 200 bilhões em TVL** em DeFi, NFTs e dApps, rodando em blockchains como **Ethereum** e **BNB Chain**. Smart contracts são **calculadoras de alta precisão**, mas um erro matemático transforma o cofre em uma peneira. **Overflow/underflow** e **erros aritméticos**, associados a **validação insuficiente (A02)** no **OWASP Smart Contract Top 10 2025**, causaram **20% dos hacks em 2024**, com **US$ 223 milhões em perdas**. Apesar do **Solidity 0.8+** mitigar overflow/underflow, **erros de arredondamento** e **contabilidade imprecisa** seguem como alvos. Este artigo explora essas vulnerabilidades com uma abordagem **didática e técnica**, analisando o **BeautyChain (BEC) Hack (2018)** e o **BonqDAO Hack (2023)**, com práticas para blindar a Web3. Vamos consertar o odômetro digital? 💪
 
 ---
 
-## **O que são Overflow/Underflow e Erros Aritméticos? (Visão Didática)**
+## 🚨 **O que são Overflow/Underflow e Erros Aritméticos?**
 
-* **Overflow/Underflow:** quando uma operação ultrapassa os **limites** do tipo numérico (p. ex., `uint8` vai de 0 a 255).
+Imagine um odômetro de carro que, ao chegar a 999.999 km, volta a **0** – ou, pior, ao tentar retroceder de 0, pula para **999.999**. Na blockchain, **overflow/underflow** ocorre quando operações ultrapassam os limites de um tipo numérico (ex.: `uint8` de 0 a 255). **Erros de arredondamento** surgem em divisões ou cálculos que perdem precisão, criando **resíduos exploráveis** em shares, juros ou taxas.
 
-  * `200 + 100` em `uint8` “transborda”: `300 - 256 = 44`.
-  * `0 - 1` em `uint8` “rola” para **255** (*underflow*).
-* **Erros aritméticos (arredondamento):** divisões e multiplicações com **perda de precisão**, que **quebram invariantes** financeiros (ex.: distribuição de *shares*, juros, taxas).
+> 😄 *Piada*: "Overflow é como ganhar um carro novo toda vez que o odômetro estoura – e hackers adoram essa concessionária on-chain!"
 
-  * Dividir **1 token** entre **3** sem lidar com decimais → resíduos exploráveis.
+**Como funciona na prática?**  
+- **Overflow**: `200 + 100` em `uint8` resulta em `44` (300 - 256).  
+- **Underflow**: `0 - 1` em `uint8` vira `255`.  
+- **Arredondamento**: Dividir 1 token entre 3 usuários pode gerar resíduos (ex.: `1 / 3 = 0` em inteiros), acumuláveis por atacantes.  
 
-> 🎯 **Intuição:** *Overflow/underflow* cria **saldos absurdos**; *rounding* cria **vazamentos discretos** (centavos viram fortunas quando repetidos milhares de vezes).
-
----
-
-## **Contexto Técnico — Como o Ataque Acontece**
-
-### 1) Overflow/Underflow (pré-Solidity 0.8)
-
-* **Causa:** operações `+`, `-`, `*` sem verificação automática.
-* **Exploração:** forçar transbordo (ex.: somar a um `uint` próximo do limite) ou *underflow* (subtrair de saldo zero).
-* **Efeito:** *mint* indireto, saques indevidos, contabilidade corrompida.
-
-### 2) Erros de Arredondamento / Precisão
-
-* **Causa:** divisões inteiras, falta de escala (decimais), *rounding* mal definido.
-* **Exploração:** repetição de operações que acumulam resíduos (p. ex., emissão de *shares*), manipulação de preços combinada a matemática imprecisa.
-* **Efeito:** *drift* contábil (a soma dos saldos ≠ total do pool).
-
-#### **Fluxo típico do atacante**
-
-1. **Audita o bytecode/código** atrás de operações aritméticas frágeis.
-2. **Crafta entradas** que provoquem *overflow/underflow* (ou que maximizem resíduos por *rounding*).
-3. **Repete** o padrão (às vezes com *flash loans*) até extrair ganho material.
-4. **Realiza swaps/saques** e **lava** a vantagem obtida.
+**Estatísticas de Impacto**: Em 2024, **20% dos hacks** (A02) envolveram erros aritméticos, com **US$ 223M perdidos**. O **BeautyChain Hack (2018)** e o **BonqDAO Hack (2023)** destacam o risco persistente.
 
 ---
 
-## **Exemplos em Solidity — Vulnerável vs. Seguro**
+## 🛠 **Contexto Técnico: Como o Ataque Acontece**
 
-### ❌ **Contrato vulnerável (pré-0.8, sem checagens)**
+### **Mecânica do Ataque**
+
+1. **Overflow/Underflow (Pré-Solidity 0.8)**  
+   - **Erro**: Operações `+`, `-`, `*` sem verificações de limites.  
+   - **Exploração**: Forçar transbordo (ex.: somar a `uint` próximo do limite) ou subtrair de zero, criando saldos absurdos.  
+   - **Exemplo**: Subtrair `100` de um saldo `50` em `uint8` gera `206` (underflow).
+
+2. **Erros de Arredondamento**  
+   - **Erro**: Divisões inteiras ou cálculos sem escala decimal perdem precisão.  
+   - **Exploração**: Atacantes repetem operações para acumular resíduos ou manipulam preços via oráculos frágeis.  
+   - **Exemplo**: Divisão `1 / 3 = 0` em inteiros deixa resíduos exploráveis.
+
+**Passos de um Ataque Típico**:  
+1. **Análise**: Atacante examina o código público por operações aritméticas frágeis.  
+2. **Exploração**: Envia entradas que causam overflow/underflow ou acumulam resíduos (ex.: via flash loans).  
+3. **Lucro**: Realiza saques indevidos ou swaps com valores manipulados.  
+4. **Impacto**: Drena fundos ou corrompe a contabilidade do contrato.
+
+### **Exemplo de Código Solidity Vulnerável**
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.0; // sem checagens nativas de overflow/underflow
+pragma solidity ^0.7.0; // Pré-0.8, sem checagens nativas
 
 contract TokenVulneravel {
-    mapping(address => uint8) public saldos; // 0..255 (intencionalmente estreito)
+    mapping(address => uint8) public saldos; // 0 a 255
 
     function transferir(address para, uint8 valor) external {
-        require(saldos[msg.sender] >= valor, "saldo insuficiente");
-        saldos[msg.sender] -= valor; // underflow se valor > saldo
-        saldos[para]       += valor; // overflow se saldos[para] + valor > 255
+        require(saldos[msg.sender] >= valor, "Saldo insuficiente");
+        saldos[msg.sender] -= valor; // Underflow se valor > saldo
+        saldos[para] += valor; // Overflow se ultrapassa 255
     }
 
     function juros(uint valor, uint taxaBps) external pure returns (uint) {
-        // impreciso: perde frações (rounding), suscetível a "vazamento de centavos"
-        return (valor * taxaBps) / 10_000;
+        return (valor * taxaBps) / 10_000; // Perde frações
     }
 }
 ```
 
-### ✅ **Versão moderna (Solidity ≥ 0.8)**
+**Como o ataque funciona?**  
+- **Overflow**: Atacante chama `transferir(address, 200)` com `saldos[para] = 100`, causando overflow (`100 + 200 = 44`).  
+- **Underflow**: Chama `transferir(address, 100)` com `saldos[msg.sender] = 50`, gerando `255` (underflow).  
+- **Arredondamento**: Repete `juros(1, 100)` para acumular resíduos de frações perdidas.
 
+**Contrato Atacante**:
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.7.0;
 
-contract TokenSeguro {
-    mapping(address => uint256) public saldos;
+contract Atacante {
+    TokenVulneravel public token;
 
-    function transferir(address para, uint256 valor) external {
-        require(para != address(0), "dest invalido");
-        uint256 s = saldos[msg.sender];
-        require(s >= valor, "saldo insuficiente");
-        unchecked { saldos[msg.sender] = s - valor; } // opcional: usar checagem nativa (sem unchecked)
-        saldos[para] += valor; // reveste se overflow (sem unchecked)
+    constructor(address _token) {
+        token = TokenVulneravel(_token);
+    }
+
+    function atacar() public {
+        token.transferir(address(this), 200); // Provoca overflow/underflow
+        for (uint i = 0; i < 1000; i++) {
+            token.juros(1, 100); // Acumula resíduos
+        }
     }
 }
 ```
 
-### ✅ **Pré-0.8 com SafeMath (OpenZeppelin)**
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
-import "@openzeppelin/contracts/math/SafeMath.sol";
-
-contract TokenSeguroLegacy {
-    using SafeMath for uint256;
-    mapping(address => uint256) public saldos;
-
-    function transferir(address para, uint256 valor) external {
-        saldos[msg.sender] = saldos[msg.sender].sub(valor); // reverte underflow
-        saldos[para]       = saldos[para].add(valor);       // reverte overflow
-    }
-}
-```
-
-### ✅ **Arredondamento seguro (mulDiv)**
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
-import "@openzeppelin/contracts/utils/math/Math.sol";
-
-function calcJuros(uint256 principal, uint256 taxaBps)
-    pure returns (uint256)
-{
-    // mulDiv com arredondamento explícito evita perdas sistemáticas
-    return Math.mulDiv(principal, taxaBps, 10_000, Math.Rounding.Floor);
-}
-```
+**Por que é perigoso?** O código público da blockchain facilita a identificação de falhas aritméticas. Flash loans amplificam ataques, e resíduos de arredondamento podem ser acumulados em larga escala.
 
 ---
 
-## **Casos Reais — BeautyChain (BEC, 2018) e BonqDAO (2023)**
+## 📊 **Casos Reais: BeautyChain (BEC) Hack e BonqDAO Hack**
 
-### **BeautyChain (BEC) — 2018: o “BatchOverflow” que cunhou o impossível**
+### **BeautyChain (BEC) Hack (2018)**  
+- **Contexto**: Token ERC-20 na Ethereum, com função de *batchTransfer*.  
+- **Ataque**: Um overflow na função *batchTransfer* permitiu mintar tokens indevidos.  
+- **Como funcionou?**:  
+  - Função calculava `total = value * count` sem verificação de limites.  
+  - Atacante usou valores grandes (ex.: `value = 2^256 / count`) para causar overflow, gerando um `total` válido mas absurdo.  
+  - Mintou **bilhões de BEC**, despejando-os em exchanges.  
+- **Impacto**:  
+  - Preço do BEC colapsou; trading suspenso.  
+  - Perdas de **milhões** e efeito dominó em exchanges.  
+- **Lição**:  
+  - Sempre valide limites em operações de *batch* ou *mint*.  
+  - Use **SafeMath** (pré-0.8) ou Solidity 0.8+.  
+  - Verifique invariantes (ex.: soma de saldos = *supply*).
 
-**Contexto:** token **ERC-20** na Ethereum. A função de **transferência em lote** (*batchTransfer*) apresentava um **overflow** clássico.
-**Ataque (simplificado):**
-
-* O cálculo de **`total = value * count`** não tinha *guard*.
-* Valores grandes provocavam **overflow**, produzindo montantes “válidos” porém absurdos.
-* O atacante “cunhou” **bilhões** de BEC e despejou em **exchanges** antes da detecção.
-  **Impacto:** preço desabou; **trading** suspenso; perdas de **milhões** e efeito dominó em listagens.
-  **Lições:**
-* *Nunca* manipular somas/ multiplicações sem *guards* (pré-0.8).
-* **Auditar** rotinas de *batch*, *airdrops* e *mint*.
-* Em tokens: validar limites e **invariantes** (soma das posições = *supply*).
-
-> 🔎 **Padrão-tipo (pseudocódigo)**
-> `uint total = value * to.length; // overflow`
-> `require(bal[msg.sender] >= total);`
-> `... distribuir ...`
-
----
-
-### **BonqDAO — 2023: aritmética + oracle, uma dupla perigosa**
-
-**Contexto:** protocolo DeFi na **Polygon**; *shares* e colaterais calculados com base em **oráculo**.
-**Ataque (simplificado):**
-
-* Cálculos de *shares* com **divisão inteira** geravam **resíduos**.
-* Manipulando o **preço via oráculo**, o atacante explorou o **rounding** para **mintar *shares* extras** e sacar valor indevido.
-  **Impacto:** perdas estimadas na casa de **dezenas de milhões** (muitas fontes citam **~US$ 63M**).
-  **Lições:**
-* Usar **TWAP/mediana** e **oráculos robustos** (Chainlink) — nunca *spot* frágil.
-* **mulDiv** e arredondamento explícito; **fuzzing** para cenários extremos.
-* **Invariantes**: a soma das *shares* precisa bater com o *supply*/reserva subjacente.
+### **BonqDAO Hack (2023)**  
+- **Contexto**: Protocolo DeFi na Polygon, com cálculo de *shares* baseado em oráculos.  
+- **Ataque**: Erros de arredondamento e manipulação de oráculo permitiram minting indevido.  
+- **Como funcionou?**:  
+  - Divisão inteira em *shares* gerava resíduos exploráveis.  
+  - Atacante manipulou preço via oráculo, mintando **US$ 63M** em *shares* extras.  
+- **Impacto**:  
+  - Perdas de **dezenas de milhões**.  
+  - Protocolo pausado, confiança abalada.  
+- **Lição**:  
+  - Use **TWAP/mediana** em oráculos (ex.: Chainlink).  
+  - Adote **mulDiv** para precisão.  
+  - Teste invariantes com fuzzing.
 
 ---
 
-## **Prevenção Moderna (2025) — do Código ao Processo**
+## 🛡️ **Prevenção Moderna contra Overflow/Underflow e Erros Aritméticos (2025)**
 
-### **No Código**
+### **Boas Práticas Técnicas**  
+- **Solidity 0.8+** 🛠  
+  - Checagens nativas contra overflow/underflow.  
+  ```solidity
+  // SPDX-License-Identifier: MIT
+  pragma solidity ^0.8.24;
 
-* **Solidity 0.8+**: padrão — *overflow/underflow* revertem.
-* **Math explícita**: `Math.mulDiv`, *scaling* por casas decimais (18) e **arredondamento** documentado.
-* **Invariantes**: *asserts* e *property tests* (Echidna).
-* **Revisões focadas**: *batch*, *loops*, *mint/burn*, *fees* e *interest accrual*.
+  contract TokenSeguro {
+      mapping(address => uint256) public saldos;
 
-### **No Processo**
+      function transferir(address para, uint256 valor) external {
+          require(para != address(0), "Destinatário inválido");
+          require(saldos[msg.sender] >= valor, "Saldo insuficiente");
+          saldos[msg.sender] -= valor; // Reverte em underflow
+          saldos[para] += valor; // Reverte em overflow
+      }
+  }
+  ```  
+- **SafeMath (Pré-0.8)** 🔒  
+  ```solidity
+  // SPDX-License-Identifier: MIT
+  pragma solidity ^0.7.6;
+  import "@openzeppelin/contracts/math/SafeMath.sol";
 
-* **Auditorias** recorrentes (2+ firmas quando sistêmico).
-* **Fuzzing** contínuo (integração/CI).
-* **Bug bounties** — estimular *white hats*.
-* **Observabilidade**: alertas para deltas contábeis anômalos.
+  contract TokenSeguroLegacy {
+      using SafeMath for uint256;
+      mapping(address => uint256) public saldos;
 
-> ✅ **Checklist rápido:**
-> (1) Solidity ≥ 0.8 • (2) `mulDiv`/decimais • (3) Invariantes e *fuzz* • (4) Oráculos robustos • (5) Auditoria + bounty.
+      function transferir(address para, uint256 valor) external {
+          saldos[msg.sender] = saldos[msg.sender].sub(valor); // Reverte underflow
+          saldos[para] = saldos[para].add(valor); // Reverte overflow
+      }
+  }
+  ```  
+- **Arredondamento Seguro** 📏  
+  - Use **Math.mulDiv** (OpenZeppelin) com arredondamento explícito.  
+  ```solidity
+  // SPDX-License-Identifier: MIT
+  pragma solidity ^0.8.24;
+  import "@openzeppelin/contracts/utils/math/Math.sol";
+
+  function calcJuros(uint256 principal, uint256 taxaBps) external pure returns (uint256) {
+      return Math.mulDiv(principal, taxaBps, 10_000, Math.Rounding.Floor);
+  }
+  ```  
+- **Invariantes**: Adicione *asserts* (ex.: `assert(totalSupply == sumBalances)`).  
+- **Oráculos Robustos**: Use Chainlink com TWAP para preços confiáveis.
+
+### **Ferramentas de Prevenção**  
+- **Slither/Mythril**: Detectam erros aritméticos (92% eficaz).  
+- **Fuzzing (Echidna)**: Simula cenários extremos.  
+- **Tenderly**: Monitora deltas contábeis anômalos.  
+- **Bounties**: Immunefi pagou **US$ 52K médio** por bugs em 2024.
+
+### **Tendências em 2025**  
+Overflow/underflow (A02) representaram **20% dos hacks** em 2024, com **US$ 223M perdidos**. Solidity 0.8+ e bibliotecas como OpenZeppelin reduzem riscos, mas erros de arredondamento persistem em DeFi. Auditorias com IA e fuzzing prometem cortar perdas em **20% até 2026**.
 
 ---
 
-## **Conclusão — Consertando o Odômetro Digital**
+## 🎯 **Conclusão: Consertando o Odômetro Digital**
 
-Overflow/underflow e erros aritméticos são **armadilhas antigas** com **impacto atual**. O **BEC/BeautyChain (2018)** mostrou como um *overflow* destrói um token em horas; o **BonqDAO (2023)** lembrou que **precisão** e **oráculos** caminham juntos. Em 2024, **~20%** dos incidentes e **~US$ 223M** estiveram ligados a **A02** (*estimativas citadas*). A receita é clara: **Solidity 0.8+**, **bibliotecas confiáveis**, **testes de propriedade e fuzzing**, **oráculos sólidos** e **auditorias contínuas**.
+Overflow/underflow e erros aritméticos, como no **BeautyChain Hack (2018)** e **BonqDAO Hack (2023)**, transformam cofres em peneiras. Com **20% dos hacks** ligados a A02, a solução é clara: use **Solidity 0.8+**, **SafeMath** (pré-0.8), **mulDiv** para precisão, **oráculos robustos** e **fuzzing**. Como disse a Hacken: *"Hackers evoluem, mas devs preparados vencem!"* Vamos consertar o odômetro da Web3? 💪
 
-> ❓ **Pergunta para a turma:** *Se você fosse dev do BeautyChain, quais 3 linhas adicionaria para impedir o overflow?*
+> ❓ *Pergunta Interativa*: "Se você fosse dev do BeautyChain, quais 3 linhas adicionaria para impedir o overflow?"
 
 ---
-
