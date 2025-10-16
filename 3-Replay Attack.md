@@ -1,6 +1,3 @@
-Aqui está o seu **artigo revisado, padronizado e “mais bonito”**, com headings consistentes, exemplos Solidity (vulnerável vs. seguro), explicação didática + técnica e **fontes citadas** nos pontos críticos. Pronto para colar em slides, PDF ou .docx.
-
----
 
 # **Artigo: Validação Insuficiente de Entradas e Anti-Replay em Smart Contracts**
 
@@ -172,7 +169,15 @@ O **Cetus Hack (2025)** mostra que **um “detalhe” matemático** sem *guard* 
 
 ---
 
+## **Apêndice — Formatação sugerida (se for para .docx/PDF)**
 
+* **Título:** Arial 16 pt, **negrito**, centralizado, azul-escuro (#003087).
+* **Subtítulos (H2/H3):** Arial 14/12 pt, **negrito**.
+* **Corpo:** Arial 12 pt, justificado, 1,15.
+* **Código:** Consolas 10 pt, fundo cinza-claro (#F4F6F8), borda fina, recuo 1 cm.
+* **Callouts (💡/⚠️/✅):** itálico, cinza #555; caixas “**Lição aprendida**”.
+
+---
 
 ## **Fontes (seleção)**
 
@@ -180,8 +185,6 @@ O **Cetus Hack (2025)** mostra que **um “detalhe” matemático** sem *guard* 
 * **Wormhole (fev/2022):** *bypass* de verificação de assinaturas (120k wETH). ([Halborn][2])
 * **Nomad (ago/2022):** *crowdsourced replay* após configuração/validação falhas. ([Medium][6])
 * **OWASP SC Top 10 (perdas por categoria):** páginas de referência/visão geral (valores variam por corte temporal). ([OWASP][3])
-
----
 
 
 [1]: https://thedefiant.io/news/hacks/cetus-protocol-hit-223-million-hack-162-million-frozen-5-million-bounty-vote-on-c13985eb?utm_source=chatgpt.com "Cetus Protocol Hit by $223 Million Hack; $162 ..."
