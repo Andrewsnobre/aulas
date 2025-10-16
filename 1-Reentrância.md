@@ -1,128 +1,184 @@
-# **Artigo: O Ataque de Reentrância em Smart Contracts: Um Mergulho Profundo no The DAO Hack**
-
-## **Introdução: O Cofre de Vidro da Web3**
-
-Em 2025, smart contracts são o coração pulsante da Web3, gerenciando bilhões em DeFi, NFTs e dApps em blockchains como Ethereum e Solana. São como cofres de vidro: transparentes, imutáveis, mas vulneráveis se mal projetados. Entre as falhas mais temidas está o **ataque de reentrância (reentrancy)**, uma técnica que explora chamadas externas em contratos antes de atualizar estados críticos, permitindo que hackers drenem fundos como se apertassem "sacar" repetidamente num caixa eletrônico desavisado. Segundo o OWASP Smart Contract Top 10 2025, reentrância (A04) causou US$ 35 milhões em perdas em 2024, sendo uma das vulnerabilidades mais icônicas da história da blockchain. Este artigo mergulha na reentrância com uma explicação didática e técnica, culminando na análise do **The DAO Hack de 2016**, o maior ataque de reentrância da história, que mudou o curso da Ethereum.
-
-*(Piada para engajar: "Reentrância é o pesadelo do dev: é como emprestar dinheiro a alguém que volta pra pedir mais antes de você anotar o primeiro empréstimo!")*
+Aqui está o seu **artigo revisado, padronizado e “mais bonito”**, com linguagem clara, headings consistentes, blocos de código em Solidity, bullets objetivos e transições suaves — pronto para usar em slides, PDF ou .docx.
 
 ---
 
-## **O que é Reentrância? (Explicação Didática)**
+# **Artigo: O Ataque de Reentrância em Smart Contracts**
 
-Imagine um caixa eletrônico que funciona assim: você pede para sacar R$100, ele te dá o dinheiro, *mas só atualiza seu saldo no banco depois de entregar as notas*. Antes que o sistema registre a retirada, você aperta "sacar de novo" e leva mais R$100, repetindo o processo até esvaziar a máquina! **Reentrância** é exatamente isso em smart contracts: um contrato malicioso "re-entra" numa função antes que ela termine, explorando chamadas externas (como transferências de ETH) para manipular o estado do contrato, geralmente drenando fundos.
+### **Um mergulho profundo no The DAO Hack**
 
-*(Piada: "Hackers amam reentrância mais que café grátis – é um saque ilimitado no banco da blockchain!")*
-
-**Como funciona na prática?** Smart contracts, como os escritos em Solidity para Ethereum, frequentemente interagem com outros contratos ou endereços via chamadas externas (ex.: `call` para enviar ETH). Se o estado do contrato (como o saldo de um usuário) não é atualizado *antes* da chamada externa, um atacante pode criar um contrato que chama a função vulnerável repetidamente, explorando a execução pendente para roubar recursos. É como se o caixa eletrônico te desse dinheiro sem nunca debitar sua conta!
-
-**Estatísticas de Impacto**: Embora reentrância tenha diminuído com melhorias no Solidity (versões >=0.8) e padrões como Checks-Effects-Interactions, ela ainda é relevante. Em 2024, causou US$ 35 milhões em perdas, sendo a 4ª maior vulnerabilidade no OWASP Smart Contract Top 10 2025. Historicamente, foi devastadora, como veremos no The DAO Hack.
+> **Em uma frase:** reentrância é quando o contrato paga antes de dar baixa — e o atacante “volta” para receber de novo.
 
 ---
 
-## **Contexto Técnico: Como a Reentrância Funciona**
+## **Introdução — O Cofre de Vidro da Web3**
 
-### **Mecânica do Ataque**
-Reentrância ocorre quando um contrato faz uma chamada externa (ex.: enviar ETH a um endereço) antes de atualizar seu estado interno (ex.: zerar o saldo do usuário). Durante a chamada externa, o contrato receptor (se malicioso) pode executar código que chama novamente a função original, explorando o estado não atualizado. O processo é:
+Em **2025**, *smart contracts* são o coração da **Web3**: gerenciam bilhões em **DeFi, NFTs e dApps** em redes como **Ethereum** e **Solana**. São **transparentes e imutáveis**, mas podem se tornar **cofres de vidro**: se o design estiver errado, quebram fácil. Entre as falhas mais emblemáticas está a **reentrância (reentrancy)** — quando um contrato faz **chamadas externas antes de atualizar o próprio estado**, permitindo que um atacante **re-entre** na função e repita uma retirada várias vezes.
+Segundo o **OWASP Smart Contract Top 10 2025**, reentrância (A04) segue relevante: em **2024**, estimam-se **~US$ 35 milhões** em perdas atribuídas a essa classe (*estimativas citadas*). Historicamente, o **The DAO Hack (2016)** cristalizou o problema e **mudou o rumo da Ethereum**.
 
-1. **Contrato Vulnerável**: Executa uma função que envia ETH ou tokens antes de atualizar variáveis de estado (ex.: `saldos[msg.sender] = 0`).
-2. **Contrato Malicioso**: Usa sua função `fallback` ou `receive` para re-entrar na função vulnerável, repetindo a chamada externa antes que o estado seja atualizado.
-3. **Drenagem de Fundos**: O ciclo continua até esgotar os recursos do contrato ou atingir limites (ex.: gas).
+> 😄 **Para engajar:** *Reentrância é o pesadelo do dev: empresta o dinheiro e, antes de anotar, o “amigo” pede de novo… e de novo.*
 
-### **Exemplo de Código Solidity Vulnerável**
+---
+
+## **O que é Reentrância? (explicação didática)**
+
+Pense num **caixa eletrônico** que te entrega R$ 100 **antes** de descontar do saldo. Se você **aperta sacar novamente** nesse intervalo, recebe **mais R$ 100** porque o sistema **ainda pensa** que seu saldo continua lá.
+Em *smart contracts*, isso acontece quando uma função **envia ETH/tokens (chamada externa)** e **só depois** atualiza variáveis críticas (ex.: `saldos[msg.sender] = 0`). Um contrato malicioso intercepta a chamada (via `receive`/`fallback`) e **chama de novo a mesma função** antes da atualização — **“re-entrando”** no fluxo — até drenar os fundos.
+
+**Por que ainda acontece?**
+
+* Contratos **legados** (pré-boas práticas).
+* Fluxos complexos com **múltiplas interações externas**.
+* Falta de **padrões** (Checks-Effects-Interactions) e de **guardas** (ReentrancyGuard).
+
+---
+
+## **Como a Reentrância funciona (visão técnica)**
+
+1. **Contrato vulnerável** executa uma função de saque que **envia ETH** com `call` **antes** de zerar o saldo.
+2. **Contrato atacante** recebe o ETH; no `receive()` ou `fallback()`, **chama novamente** a função de saque.
+3. Como o estado **não foi atualizado**, a segunda chamada **ainda encontra saldo** e paga de novo.
+4. O ciclo **se repete** até esgotar o balanço do contrato ou o **gas**.
+
+---
+
+## **Exemplo em Solidity — Vulnerável vs. Seguro**
+
+### ❌ **Contrato vulnerável**
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract BancoVulneravel {
-    mapping(address => uint) public saldos;
+    mapping(address => uint256) public saldos;
 
-    function depositar() public payable {
+    function depositar() external payable {
         saldos[msg.sender] += msg.value;
     }
 
-    function sacar() public {
-        uint valor = saldos[msg.sender];
-        require(valor > 0, "Sem saldo!");
-        // Vulnerável: Envia ETH ANTES de atualizar saldo
-        (bool sucesso, ) = msg.sender.call{value: valor}("");
-        require(sucesso, "Falha no envio");
-        saldos[msg.sender] = 0; // Atualiza DEPOIS
+    function sacar() external {
+        uint256 valor = saldos[msg.sender];
+        require(valor > 0, "Sem saldo");
+
+        // VULNERAVEL: Interacao externa ANTES dos efeitos
+        (bool ok, ) = msg.sender.call{value: valor}("");
+        require(ok, "Falha no envio");
+
+        saldos[msg.sender] = 0; // Efeito tardio -> janela para reentrancia
     }
 }
 ```
 
-**Como o ataque funciona?**  
-- Um atacante cria um contrato malicioso com uma função `fallback` ou `receive` que chama `sacar()` novamente.
-- O atacante deposita ETH (ex.: 1 ETH), chama `sacar()`, e o contrato envia 1 ETH.
-- Antes de zerar `saldos[msg.sender]`, a função `fallback` do atacante re-entra em `sacar()`, pedindo mais 1 ETH, pois o saldo ainda é 1.
-- O ciclo se repete até drenar o contrato (ou gas acabar).
+### ⚠️ **Contrato atacante (padrão didático)**
 
-**Exemplo de Contrato Malicioso**:
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+interface IBanco {
+    function depositar() external payable;
+    function sacar() external;
+}
+
 contract Atacante {
-    BancoVulneravel public banco;
+    IBanco public banco;
 
     constructor(address _banco) {
-        banco = BancoVulneravel(_banco);
+        banco = IBanco(_banco);
     }
 
-    function atacar() public payable {
+    function atacar() external payable {
+        require(msg.value >= 1 ether, "Precisa de 1 ETH");
         banco.depositar{value: 1 ether}();
         banco.sacar();
     }
 
     receive() external payable {
         if (address(banco).balance >= 1 ether) {
-            banco.sacar(); // Re-entra!
+            banco.sacar(); // Re-entra enquanto o saldo nao foi zerado
         }
     }
 }
 ```
 
-**Por que é perigoso?** A transparência da blockchain (código público) e a imutabilidade dos contratos tornam reentrância um alvo fácil. Sem proteção, qualquer contrato com chamadas externas é vulnerável.
+### ✅ **Versão segura (Checks–Effects–Interactions + guarda)**
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+abstract contract ReentrancyGuard {
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED     = 2;
+    uint256 private _status = _NOT_ENTERED;
+
+    modifier nonReentrant() {
+        require(_status != _ENTERED, "Reentrancia");
+        _status = _ENTERED;
+        _;
+        _status = _NOT_ENTERED;
+    }
+}
+
+contract BancoSeguro is ReentrancyGuard {
+    mapping(address => uint256) public saldos;
+
+    function depositar() external payable {
+        saldos[msg.sender] += msg.value;
+    }
+
+    function sacar() external nonReentrant {
+        uint256 valor = saldos[msg.sender];
+        require(valor > 0, "Sem saldo");
+
+        // Effects (ANTES)
+        saldos[msg.sender] = 0;
+
+        // Interactions (DEPOIS)
+        (bool ok, ) = msg.sender.call{value: valor}("");
+        require(ok, "Falha no envio");
+    }
+}
+```
+
+> ✅ **Boas práticas:** **CEI** (Checks–Effects–Interactions), **ReentrancyGuard**, **mínimo de chamadas externas**, uso de **pull payments** (o usuário “puxa” o pagamento quando quiser, em vez de receber *push* automático).
 
 ---
 
-## **O Caso do The DAO Hack (2016): A Reentrância que Abalou a Ethereum**
+## **The DAO Hack (2016) — a reentrância que abalou a Ethereum**
 
 ### **Contexto**
-Em 2016, a Ethereum era uma blockchain jovem, e **The DAO** (Decentralized Autonomous Organization) foi um marco: um fundo de investimento descentralizado que arrecadou US$ 150 milhões em ETH (3,6 milhões de ETH) para financiar projetos votados pela comunidade. Era o maior crowdfunding da história, gerenciando 14% de todo o ETH em circulação. O contrato, escrito em Solidity, prometia transparência e automação, mas uma falha de reentrância o transformou no maior hack da história da blockchain.
 
-### **O Ataque**
-Em junho de 2016, um atacante explorou uma vulnerabilidade de reentrância na função `splitDAO`, que permitia aos investidores retirar seus fundos para criar novos DAOs. A função transferia ETH antes de atualizar o saldo do usuário, criando uma janela para múltiplas chamadas.
+* **The DAO**: fundo de investimento **descentralizado**, com processos on-chain de **proposta e votação**.
+* Arrecadou ~**US$ 150 milhões em ETH** (cerca de **3,6 milhões de ETH** na época) — **14%** do ETH circulante.
+* Código em Solidity **ainda imaturo** (2016), sem padrões consolidados.
 
-**Como funcionou?**  
-- O atacante criou um contrato malicioso que depositou ETH no The DAO.  
-- Ele chamou `splitDAO`, que transferia ETH ao contrato malicioso via `call`.  
-- Antes de zerar o saldo no The DAO, o contrato malicioso usou sua função `fallback` para chamar `splitDAO` novamente, recebendo mais ETH.  
-- O ciclo se repetiu, drenando **3,6 milhões de ETH** (cerca de **US$ 50 milhões na época**, equivalente a US$ 70-80M hoje ajustado pela inflação).  
+### **A vulnerabilidade**
 
-**Código Simplificado do The DAO (Vulnerável)**:
+A função de “*split*”/retirada **enviava ETH antes de atualizar o saldo** do usuário, abrindo a janela para **reentrância**.
+
+**Esboço vulnerável (simplificado):**
+
 ```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.4.0; // Versão antiga
+pragma solidity ^0.4.0;
 
 contract TheDAO {
-    mapping(address => uint) public saldos;
+    mapping(address => uint256) public credit;
 
     function splitDAO(address receptor) public {
-        uint valor = saldos[msg.sender];
+        uint256 valor = credit[msg.sender];
         if (valor > 0) {
-            // Vulnerável: Envia ETH antes de atualizar
-            receptor.call.value(valor)();
-            saldos[msg.sender] = 0;
+            // Interacao externa primeiro -> vulneravel
+            if (!receptor.call.value(valor)()) { revert(); }
+            credit[msg.sender] = 0; // Efeito apos a interacao
         }
     }
 }
 ```
 
-**Contrato Atacante (Hipotético)**:
+**Contrato atacante (padrão da época, pseudo-legacy):**
+
 ```solidity
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.4.0;
 
 contract Atacante {
@@ -130,72 +186,68 @@ contract Atacante {
 
     function atacar(address _dao) public {
         dao = TheDAO(_dao);
-        dao.splitDAO(address(this));
+        dao.splitDAO(this);
     }
 
     function() public payable {
         if (address(dao).balance >= 1 ether) {
-            dao.splitDAO(address(this)); // Re-entra
+            dao.splitDAO(this); // Re-entra enquanto credit nao foi zerado
         }
     }
 }
 ```
 
-### **Impacto**
-- **Financeiro**: O atacante drenou 3,6M ETH, cerca de 14% do total do The DAO.  
-- **Estratégico**: O hack abalou a confiança na Ethereum, que era vista como a vanguarda da Web3.  
-- **Técnico**: Expôs a imaturidade do Solidity na época (versão <0.4.0, sem proteções nativas).  
-- **Comunitário**: Levou a um hard fork controverso na Ethereum para reverter o hack, criando a **Ethereum Classic** (ETC), onde o hack permaneceu válido. Isso dividiu a comunidade, com debates éticos sobre imutabilidade vs. recuperação.
+### **Linha do tempo do ataque**
 
-### **Lições Aprendidas**
-1. **Padrão Checks-Effects-Interactions**: Atualize o estado (ex.: `saldos[msg.sender] = 0`) *antes* de chamadas externas.  
-   ```solidity
-   function sacar() public {
-       uint valor = saldos[msg.sender];
-       require(valor > 0, "Sem saldo!");
-       saldos[msg.sender] = 0; // Atualiza PRIMEIRO
-       (bool sucesso, ) = msg.sender.call{value: valor}("");
-       require(sucesso, "Falha");
-   }
-   ```  
-2. **Use ReentrancyGuard**: A biblioteca OpenZeppelin oferece o modificador `nonReentrant`, bloqueando chamadas recursivas.  
-   ```solidity
-   import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+1. **Depósito**: o atacante participa do DAO e adquire “créditos”.
+2. **Primeira chamada**: aciona a função de *split*, que **envia ETH** ao atacante.
+3. **Reentrada**: no `fallback`, a mesma função é chamada **de novo**, **antes** do `credit[msg.sender] = 0`.
+4. **Loop**: repete até **drenar ~3,6M ETH** (~**US$ 50M** na época).
 
-   contract BancoSeguro is ReentrancyGuard {
-       function sacar() public nonReentrant { /* ... */ }
-   }
-   ```  
-3. **Auditorias Rigorosas**: O The DAO não foi suficientemente auditado, apesar de gerenciar US$ 150M. Hoje, firmas como Halborn detectam 92% das falhas.  
-4. **Testes Extensivos**: Simule ataques com ferramentas como Echidna para encontrar reentrâncias.  
-5. **Educação**: O hack destacou a necessidade de devs entenderem chamadas externas e estados.
+### **Impacto e repercussões**
+
+* **Financeiro**: drenagem massiva e congelamento temporário de fundos.
+* **Comunitário**: debate sobre **imutabilidade** vs. **justiça** → **hard fork** que reverteu o hack na cadeia **Ethereum**; a cadeia **Ethereum Classic (ETC)** manteve o histórico original.
+* **Técnico**: consolidação de padrões (**CEI**, **ReentrancyGuard**), foco em **auditorias** e **testes de segurança**.
+
+### **Lições práticas (aplicáveis hoje)**
+
+1. **Atualize estado antes de interações externas** (CEI).
+2. **Use guardas de reentrância** (OpenZeppelin).
+3. **Evite “pagar no meio do fluxo”** — prefira *pull payments*.
+4. **Teste adversarialmente**: simule reentrância com **Echidna/Foundry**.
+5. **Auditoria independente** quando o contrato **custodia valores relevantes**.
 
 ---
 
-## **Prevenção Moderna contra Reentrância (2025)**
+## **Prevenção moderna (2025) — do código ao processo**
 
-### **Boas Práticas Técnicas**
-- **Solidity >=0.8**: Inclui checks automáticos para overflow/underflow, mas reentrância exige cuidado manual.  
-- **Padrão Checks-Effects-Interactions**: Sempre atualize estados antes de chamadas externas.  
-- **ReentrancyGuard**: Use o modificador `nonReentrant` do OpenZeppelin para bloquear reentrâncias.  
-- **Limite Gas**: Chamadas externas com gas limitado (ex.: `call{gas: 2300}`) reduzem riscos, mas não eliminam.  
-- **Evite Chamadas Externas Desnecessárias**: Use `transfer` (limitado a 2300 gas) em vez de `call` quando possível, embora `call` seja comum para compatibilidade.  
+### **Técnicas**
 
-### **Ferramentas de Prevenção**
-- **Slither/Mythril**: Detectam 92% das reentrâncias em código.  
-- **Tenderly**: Monitoramento real-time de transações suspeitas.  
-- **Fuzzing (Echidna)**: Simula ataques recursivos.  
-- **Bounties**: Plataformas como Immunefi pagaram US$ 52K em média por bugs de reentrância em 2024.
+* **Solidity ≥ 0.8** (under/overflow com *revert*; reentrância ainda exige padrão).
+* **CEI + ReentrancyGuard** como padrão de projeto.
+* **Design sem chamadas externas** quando possível (minimize superfícies).
+* **Limites**: *rate-limits*, *caps* por transação, *circuit breakers*.
 
-### **Tendências em 2025**
-Reentrância caiu em prevalência (10% dos hacks em 2024) devido a melhores práticas e Solidity moderno, mas ainda é uma ameaça em contratos legados ou mal auditados. A ascensão de AI scams e pontes cross-chain desviou o foco, mas reentrância permanece no OWASP Top 10 (A04) por seu potencial devastador. Previsão: Auditorias com IA reduzirão perdas em 20% até 2026.
+### **Ferramentas**
 
----
+* **Slither/Mythril**: estática para detectar padrões de reentrância.
+* **Echidna/Foundry**: *fuzzing* e *property-based testing*.
+* **Tenderly**: simulação e *monitoring* de execuções.
+* **Bug bounties** (Immunefi): incentivo a *white hats*.
 
-## **Conclusão: Do Caos do The DAO à Segurança Moderna**
+### **Processo**
 
-O ataque de reentrância ao The DAO em 2016 foi um divisor de águas: expôs as fragilidades dos smart contracts, dividiu a comunidade Ethereum, e impulsionou o desenvolvimento de práticas seguras que usamos hoje, como ReentrancyGuard e auditorias robustas. É uma lição viva de que, na Web3, transparência e imutabilidade são facas de dois gumes: poderosas, mas perigosas sem cuidado. Como disse a Hacken: "Hackers evoluem, mas devs preparados vencem!" Em 2025, com ferramentas como Slither e padrões OpenZeppelin, podemos construir cofres digitais inquebráveis – mas só se aprendermos com o passado.
-
-*(Pergunta Interativa para Alunos: "Se você fosse dev do The DAO, como teria evitado o hack?")*
+* **Revisões cruzadas** (dupla de revisores).
+* **Auditorias recorrentes** (2+ quando impacto é sistêmico).
+* **Playbooks de resposta** (pausa, *kill switch*, comunicação).
 
 ---
+
+## **Conclusão — do caos do The DAO à engenharia segura**
+
+O **The DAO Hack** mostrou que **transparência** e **imutabilidade** são poderosas — e perigosas sem disciplina de engenharia.
+A partir dele, a comunidade consolidou **boas práticas** (CEI, *guards*, auditoria, testes adversariais). Em **2025**, reentrância é **menos prevalente**, mas **não desapareceu**: contratos legados e fluxos mal desenhados ainda abrem portas.
+
+> ❓ **Para a turma:** *Se você estivesse no time do The DAO, quais 3 mudanças teria implementado para impedir o ataque?*
+
