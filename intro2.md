@@ -75,25 +75,16 @@ Segurança em Web3 não é só firewall — é **camadas**:
 |  A07 | Flash Loans (amplificador)   |      ~18%     |             — | bZx / Harvest            |
 |   —  | Outros (DoS, Timestamp, etc) |      ~22%     |         200M+ | King of Ether, etc.      |
 
-* *Estimativas citadas / exemplos ilustrativos; ajuste conforme suas fontes oficiais.*
+
 
 ---
 
-## **Ponte para a aula (call-to-action)**
+
+
 
 > **Web3 em 2025 é uma revolução — e revoluções só duram quando são seguras.**
 > Devs preparados transformam **vulnerabilidades em fortalezas**: do **código** ao **operacional**, da **governança** à **educação comunitária**.
 
-**Transição sugerida para os próximos slides:**
-“Agora que mapeamos o ecossistema, vamos entrar nos **ataques mais explorados** — com **código Solidity** expondo o problema, **passo a passo do exploit** e as **mitigações**. A ideia é *ver* como o atacante pensa e *fazer* o contrato resistir.”
 
 ---
 
-### Dicas rápidas de design visual (se for para slides):
-
-* Use **fundo claro** com **destaques em azul** (acessibilidade).
-* Combine **headings curtos** + **bullets de 1 linha** + **callouts** (“Lição aprendida”).
-* Intercale **trechos de código** em blocos monoespaçados.
-* Reserve 1 slide para **“Roteiro do atacante”** por vulnerabilidade.
-
-Se quiser, eu converto este texto em **PPTX** (tema claro profissional) com **boxes, ícones e espaços para código** — ou em **DOCX** diagramado com **títulos, sumário e estilos**.
