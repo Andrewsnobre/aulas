@@ -1,60 +1,57 @@
-# **Artigo: Negação de Serviço (DoS) On-Chain em Smart Contracts: Um Mergulho Profundo no King of the Hill Hack e Outros Casos**
+# 🛑 **Construindo Web3 Segura: Negação de Serviço (DoS) On-Chain em Smart Contracts**
 
-## **Introdução: Travando o Motor da Web3**
+> *"DoS on-chain é como entupir o caixa eletrônico com chiclete – ninguém mais saca, e o hacker dá risada!"*  
+> — *Inspirado por Hacken: "Hackers evoluem, mas devs preparados vencem!"* 🛡️
 
-Em 2025, smart contracts são o coração pulsante da Web3, gerenciando bilhões em DeFi, NFTs e dApps em blockchains como Ethereum e BNB Chain, com mais de US$ 200 bilhões em TVL (Total Value Locked). São como máquinas digitais que devem operar sem interrupções, mas, se alguém joga areia nas engrenagens, o sistema para. **Negação de Serviço (DoS) on-chain**, classificada como **A09 no OWASP Smart Contract Top 10 2025**, ocorre quando padrões de código permitem travar filas, forçar reverts, consumir gas excessivo em loops ou bloquear retiradas e tarefas para outros usuários. Embora represente uma parcela menor dos hacks (cerca de **5% dos incidentes em 2024**), o impacto é significativo, especialmente em jogos e protocolos com alta interação. Este artigo explora o DoS on-chain com uma abordagem didática e técnica, culminando na análise do **King of the Hill Hack de 2018**, um exemplo clássico, além de casos relacionados como o Poly Network Hack.
-
-*(Piada para engajar: "DoS on-chain é como entupir o caixa eletrônico com chiclete – ninguém mais saca, e o hacker dá risada!")*
-
----
-
-## **O que é DoS On-Chain? (Explicação Didática)**
-
-Imagine um banco com uma única fila onde, se alguém fica parado na frente, ninguém mais consegue ser atendido. Ou um caixa que trava se você tentar sacar um valor muito grande. **DoS on-chain** ocorre quando um atacante explora falhas na lógica de um smart contract para impedir que outros usuários executem ações, como saques, depósitos ou tarefas críticas. Isso pode ser feito ao:  
-- **Travar filas**: Bloquear processos que dependem de uma ordem (ex.: leilões).  
-- **Forçar reverts**: Criar condições que fazem transações falharem.  
-- **Consumir gas**: Usar loops ou operações pesadas para esgotar o limite de gas.  
-- **Bloquear retiradas**: Impedir que usuários acessem fundos ou completem ações.  
-
-*(Piada: "DoS na blockchain? É como trancar a porta do banco e jogar a chave fora!")*
-
-**Como funciona na prática?** Smart contracts, especialmente em jogos, leilões ou DeFi, podem ter vulnerabilidades que permitem ataques de DoS. Atacantes exploram:  
-- **Dependências externas**: Contratos que dependem de chamadas externas (ex.: oráculos) que podem falhar.  
-- **Loops caros**: Iterações que consomem gas excessivo, travando o contrato.  
-- **Condições de bloqueio**: Lógica que impede saques ou ações se um estado específico for atingido.  
-Sem mitigação, como limites de gas ou verificações robustas, o contrato fica inacessível, causando perdas de funcionalidade ou confiança.
-
-**Estatísticas de Impacto**: DoS on-chain, parte de A09, contribuiu para **5% dos hacks em 2024**, com impacto em jogos, leilões e DeFi. Embora menos quantificado em perdas diretas, o **King of the Hill Hack** (2018) e casos similares mostram como o DoS pode paralisar sistemas, custando milhões em funcionalidade perdida e confiança abalada.
+Em **2025**, a Web3 é o motor da economia digital, com **mais de US$ 200 bilhões em TVL** em DeFi, NFTs e dApps, rodando em blockchains como **Ethereum** e **BNB Chain**. Smart contracts são **máquinas digitais** que devem operar sem pausas, mas um ataque de **Negação de Serviço (DoS) on-chain**, classificado como **A09 no OWASP Smart Contract Top 10 2025**, joga areia nas engrenagens, travando filas, forçando reverts ou bloqueando ações. Representando **5% dos hacks em 2024**, o DoS impacta jogos, leilões e DeFi, causando perdas de funcionalidade e confiança. Este artigo explora o DoS on-chain com uma abordagem **didática e técnica**, analisando o **King of the Hill Hack (2018)** e o **Poly Network Hack (2021)**, com práticas para manter o motor da Web3 funcionando. Vamos desentupir o sistema? 💪
 
 ---
 
-## **Contexto Técnico: Como Funciona o DoS On-Chain**
+## 🚨 **O que é DoS On-Chain?**
+
+Imagine um banco com uma única fila onde um cliente malicioso bloqueia todos os outros, ou um caixa que trava ao tentar processar uma transação gigante. **DoS on-chain** ocorre quando atacantes exploram falhas na lógica de smart contracts para impedir ações de outros usuários, como saques, depósitos ou tarefas críticas. Isso é feito por:  
+- **Travar Filas**: Monopolizar processos sequenciais (ex.: leilões).  
+- **Forçar Reverts**: Criar condições que fazem transações falharem.  
+- **Consumo de Gas**: Usar loops caros para esgotar limites de gas.  
+- **Bloqueio de Ações**: Impedir saques ou interações via estados manipulados.
+
+> 😄 *Piada*: "DoS na blockchain? É como trancar a porta do banco e jogar a chave fora!"
+
+**Como funciona na prática?** Contratos em jogos, leilões ou DeFi podem ter vulnerabilidades que permitem:  
+- **Dependências Externas**: Chamadas a contratos ou oráculos que falham, travando o sistema.  
+- **Loops Caros**: Iterações que consomem gas excessivo, bloqueando funções.  
+- **Estados Bloqueados**: Lógica que impede ações se condições específicas são atingidas.  
+
+**Estatísticas de Impacto**: DoS on-chain (A09) causou **5% dos hacks em 2024**, com impacto em jogos e DeFi. O **King of the Hill Hack (2018)** paralisou um jogo, e o **Poly Network Hack (2021)** mostrou como o DoS amplifica outros ataques.
+
+---
+
+## 🛠 **Contexto Técnico: Como Funciona o DoS On-Chain**
 
 ### **Mecânica do Ataque**
 
-1. **Travar Filas ou Estados**:  
-   - **Erro**: Contratos dependem de estados sequenciais (ex.: fila de lances) que podem ser monopolizados.  
-   - **Exploração**: Atacantes enviam transações que travam a fila ou mantêm um estado bloqueado, impedindo outros usuários.  
-   - **Exemplo**: Um leilão que requer lances maiores, mas o atacante envia lances inválidos que travam o processo.
+1. **Travar Filas ou Estados**  
+   - **Erro**: Contratos com lógica sequencial (ex.: leilões) que podem ser monopolizados.  
+   - **Exploração**: Atacante envia transações que travam a fila ou mantêm estados bloqueados.  
+   - **Exemplo**: Lance inválido em um leilão que impede novos lances.
 
-2. **Forçar Reverts**:  
-   - **Erro**: Lógica que reverte transações sob condições específicas (ex.: chamadas externas falhando).  
-   - **Exploração**: Atacantes criam condições que forçam reverts, bloqueando ações de outros usuários.  
-   - **Exemplo**: Um contrato que reverte se um oráculo externo não responde.
+2. **Forçar Reverts**  
+   - **Erro**: Dependência de chamadas externas que podem falhar.  
+   - **Exploração**: Atacante provoca falhas (ex.: contrato sem `receive`), travando funções.  
+   - **Exemplo**: Reembolso que reverte, bloqueando o contrato.
 
-3. **Consumo Excessivo de Gas**:  
-   - **Erro**: Loops ou operações pesadas sem limites de gas.  
-   - **Exploração**: Atacantes enviam entradas que desencadeiam loops caros, esgotando o gas e travando o contrato.  
-   - **Exemplo**: Um loop que itera sobre uma lista de usuários sem limite.
+3. **Consumo Excessivo de Gas**  
+   - **Erro**: Loops sem limites de gas.  
+   - **Exploração**: Atacante envia entradas que consomem gas, travando o contrato.  
 
-4. **Bloqueio de Retiradas**:  
-   - **Erro**: Lógica que impede saques se condições específicas não são atendidas.  
-   - **Exploração**: Atacantes manipulam o estado para bloquear saques (ex.: inflando saldos falsos).  
+4. **Bloqueio de Retiradas**  
+   - **Erro**: Lógica que impede saques em certos estados.  
+   - **Exploração**: Atacante manipula o estado para bloquear retiradas.
 
 **Passos de um Ataque Típico**:  
-- **Identificação**: O atacante analisa o código (público na blockchain) para encontrar lógica suscetível a travamento ou consumo de gas.  
-- **Exploração**: Envia transações que monopolizam filas, forçam reverts ou consomem gas excessivo.  
-- **Impacto**: Impede outros usuários de interagir, causando paralisação, perda de funcionalidade ou confiança.
+1. **Análise**: Atacante examina código público por lógica vulnerável (ex.: loops, chamadas externas).  
+2. **Exploração**: Envia transações que monopolizam filas, forçam reverts ou consomem gas.  
+3. **Impacto**: Paralisação do contrato, perda de funcionalidade ou confiança.
 
 ### **Exemplo de Código Solidity Vulnerável**
 
@@ -66,19 +63,17 @@ contract LeilaoVulneravel {
     address public maiorLicitante;
     uint public lanceMaior;
 
-    // Vulnerável: Pode ser travado por lances inválidos
     function darLance() public payable {
         require(msg.value > lanceMaior, "Lance muito baixo");
-        (bool sucesso, ) = maiorLicitante.call{value: lanceMaior}(""); // Reembolso
+        (bool sucesso, ) = maiorLicitante.call{value: lanceMaior}(""); // Vulnerável
         require(sucesso, "Falha no reembolso");
         lanceMaior = msg.value;
         maiorLicitante = msg.sender;
     }
 
-    // Vulnerável: Loop caro
     function distribuirPremio(address[] memory usuarios) public {
+        // Vulnerável: Loop caro
         for (uint i = 0; i < usuarios.length; i++) {
-            // Consome gas excessivo se lista for grande
             (bool sucesso, ) = usuarios[i].call{value: 1 ether}("");
             require(sucesso, "Falha");
         }
@@ -87,11 +82,11 @@ contract LeilaoVulneravel {
 ```
 
 **Como o ataque funciona?**  
-- **Travar Fila**: O atacante envia um lance para `darLance` com um `maiorLicitante` que reverte (ex.: contrato sem `receive`), travando o leilão.  
-- **Consumo de Gas**: O atacante chama `distribuirPremio` com uma lista enorme de `usuarios`, esgotando o limite de gas e bloqueando a função.  
-- **Bloqueio de Retiradas**: O reembolso em `darLance` falha se `maiorLicitante` não aceita ETH, impedindo novos lances.  
+- **Travar Fila**: Atacante envia lance com `maiorLicitante` que reverte (ex.: contrato sem `receive`), travando `darLance`.  
+- **Consumo de Gas**: Chama `distribuirPremio` com lista gigante de `usuarios`, esgotando gas.  
+- **Bloqueio**: Reembolso em `darLance` falha, impedindo novos lances.
 
-**Contrato Atacante (Hipotético)**:
+**Contrato Atacante**:
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -104,63 +99,57 @@ contract Atacante {
     }
 
     function atacar() public payable {
-        // Travar leilão
-        leilao.darLance{value: 1 ether}(); // Contrato sem receive
-        // Consumir gas
+        leilao.darLance{value: 1 ether}(); // Trava reembolso
         address[] memory usuarios = new address[](10000); // Lista grande
-        leilao.distribuirPremio(usuarios);
+        leilao.distribuirPremio(usuarios); // Consome gas
     }
 
-    // Impede reembolso
     receive() external payable {
-        revert("Bloqueado");
+        revert("Bloqueado"); // Impede reembolso
     }
 }
 ```
 
-**Por que é perigoso?** A transparência da blockchain expõe a lógica vulnerável, e o alto custo de gas ou falhas de chamadas externas amplificam o impacto. DoS on-chain é crítico em sistemas interativos (ex.: leilões, jogos), com **5% dos hacks em 2024** ligados a A09.
+**Por que é perigoso?** A transparência da blockchain expõe lógica vulnerável, e chamadas externas ou loops caros facilitam o DoS. Parte dos **5% dos hacks em 2024** (A09).
 
 ---
 
-## **Casos Reais: King of the Hill Hack (2018) e Poly Network Hack (2021)**
+## 📊 **Casos Reais: King of the Hill Hack (2018) e Poly Network Hack (2021)**
 
 ### **King of the Hill Hack (2018)**  
-- **Contexto**: King of the Hill era um jogo na Ethereum onde jogadores competiam para manter o "trono" com lances, com reembolsos para o jogador anterior.  
-- **Ataque**: Um contrato malicioso foi usado para travar reembolsos, bloqueando o jogo.  
+- **Contexto**: Jogo na Ethereum onde jogadores competiam pelo "trono" com lances, reembolsando o anterior.  
+- **Ataque**: Contrato malicioso travou reembolsos, paralisando o jogo.  
 - **Como funcionou?**:  
-  - O atacante enviou um lance com um contrato que revertia ao receber ETH (sem `receive`).  
-  - Isso travou o reembolso ao jogador anterior, impedindo novos lances e paralisando o jogo.  
-  - O atacante reteve o "trono", causando perdas de **milhares de ETH**.  
+  - Atacante enviou lance com contrato que revertia ao receber ETH.  
+  - Isso travou o reembolso, impedindo novos lances e mantendo o atacante no "trono".  
+  - Drenou **milhares de ETH** em prêmios.  
 - **Impacto**:  
-  - Jogo paralisado, com colapso de confiança.  
-  - Reforçou os riscos de chamadas externas.  
-  - Destacou a necessidade de lógica robusta.  
+  - Jogo paralisado, confiança abalada.  
+  - Expôs riscos de chamadas externas.  
 - **Lição**:  
-  - Evite dependências de chamadas externas.  
-  - Use padrão "pull-over-push" para retiradas.  
-  - Teste cenários de falha.
+  - Use *pull-over-push* para retiradas.  
+  - Evite dependências externas.
 
 ### **Poly Network Hack (2021)**  
-- **Contexto**: Poly Network, uma ponte cross-chain, gerenciava bilhões em ativos, com funções administrativas para atualizações.  
-- **Ataque**: Uma vulnerabilidade permitiu ao atacante travar funções críticas, amplificando um hack de **US$ 611 milhões** (embora focado em controle de acesso, o DoS foi um componente).  
+- **Contexto**: Ponte cross-chain gerenciando bilhões em ativos.  
+- **Ataque**: DoS amplificou um hack de **US$ 611M** ao travar funções administrativas.  
 - **Como funcionou?**:  
-  - O atacante explorou uma falha que permitia chamadas externas a contratos que revertem, travando funções administrativas.  
-  - Isso bloqueou respostas rápidas do protocolo, facilitando o dreno de fundos.  
+  - Vulnerabilidade permitiu chamadas externas que revertem, bloqueando respostas do protocolo.  
+  - Facilitou dreno de fundos por controle de acesso.  
 - **Impacto**:  
-  - Maior hack de 2021, com fundos devolvidos após negociação.  
-  - Reforçou os riscos de DoS em pontes.  
-  - Poly implementou verificações robustas.  
+  - Maior hack de 2021, fundos devolvidos após negociação.  
+  - Reforçou riscos de DoS em pontes.  
 - **Lição**:  
-  - Limite chamadas externas arriscadas.  
-  - Use timelocks para ações críticas.  
-  - Audite lógica de interação.
+  - Limite chamadas externas.  
+  - Use timelocks para ações críticas.
 
 ---
 
-## **Prevenção Moderna contra DoS On-Chain (2025)**
+## 🛡️ **Prevenção Moderna contra DoS On-Chain (2025)**
 
-### **Boas Práticas Técnicas**
-- **Padrão Pull-over-Push**: Substitua transferências automáticas por retiradas manuais.  
+### **Boas Práticas Técnicas**  
+- **Pull-over-Push** 🔒  
+  - Substitua transferências automáticas por retiradas manuais.  
   ```solidity
   // SPDX-License-Identifier: MIT
   pragma solidity ^0.8.0;
@@ -172,7 +161,7 @@ contract Atacante {
 
       function darLance() public payable {
           require(msg.value > lanceMaior, "Lance muito baixo");
-          pendenteRetirada[maiorLicitante] += lanceMaior; // Armazena reembolso
+          pendenteRetirada[maiorLicitante] += lanceMaior;
           lanceMaior = msg.value;
           maiorLicitante = msg.sender;
       }
@@ -185,7 +174,8 @@ contract Atacante {
       }
   }
   ```  
-- **Limites de Gas**: Restrinja loops com contadores ou limites.  
+- **Limites de Gas** ⏳  
+  - Restrinja loops com contadores.  
   ```solidity
   function distribuirPremio(address[] memory usuarios, uint limite) public {
       require(limite <= 100, "Limite excedido");
@@ -195,50 +185,25 @@ contract Atacante {
       }
   }
   ```  
-- **Evitar Dependências Externas**: Minimize chamadas a contratos ou oráculos que podem falhar.  
-- **Auditorias**: Contrate firmas como Halborn (92% de detecção) para revisar lógica.  
-- **Testes**: Simule DoS com fuzzing (Echidna).
+- **Evitar Dependências Externas**: Minimize chamadas a contratos ou oráculos.  
+- **Auditorias**: Contrate Halborn (92% de detecção).  
+- **Testes**: Simule DoS com Echidna.
 
-### **Ferramentas de Prevenção**
-- **Slither/Mythril**: Detectam loops caros ou chamadas externas arriscadas (92% eficaz).  
-- **Tenderly**: Monitora transações que consomem gas excessivo.  
-- **Fuzzing (Echidna)**: Simula ataques de DoS.  
-- **Bounties**: Immunefi pagou US$ 52K em média por bugs de DoS em 2024.
+### **Ferramentas de Prevenção**  
+- **Slither/Mythril**: Detectam loops caros (92% eficaz).  
+- **Tenderly**: Monitora consumo de gas.  
+- **Fuzzing (Echidna)**: Testa DoS.  
+- **Bounties**: Immunefi pagou **US$ 52K médio** por bugs em 2024.
 
-### **Tendências em 2025**
-DoS on-chain (A09) representa **5% dos hacks**, com impacto em jogos, leilões e DeFi. A adoção de padrões como *pull-over-push* e limites de gas reduz a incidência, mas contratos legados permanecem vulneráveis. Auditorias com IA prometem reduzir perdas em 20% até 2026. O King of the Hill Hack destacou a urgência de lógica robusta.
-
----
-
-## **Conclusão: Mantendo o Motor Ligado**
-
-DoS on-chain, como visto no King of the Hill Hack (2018) e Poly Network Hack (2021), é como entupir o motor da Web3 com areia. Com **5% dos hacks em 2024** ligados a A09, a lição é clara: use padrões *pull-over-push*, limite gas e evite dependências externas. Ferramentas como Slither, Echidna e auditorias são as muralhas contra esses ataques. Como disse a Hacken: "Hackers evoluem, mas devs preparados vencem!" Vamos manter o motor funcionando?
-
-*(Pergunta Interativa para Alunos: "Se você fosse dev do King of the Hill, como teria evitado o DoS?")*
+### **Tendências em 2025**  
+DoS on-chain (A09) causou **5% dos hacks**, impactando jogos e DeFi. Padrões como *pull-over-push* e limites de gas reduzem riscos, mas legados são vulneráveis.
 
 ---
 
-## **Instruções para Formatação no Word (para .docx)**  
-1. **Copie o texto acima** para um novo documento Microsoft Word.  
-2. **Formatação Geral**:  
-   - **Título Principal**: Arial, 16pt, negrito, centralizado, azul escuro (#003087).  
-   - **Subtítulos (ex.: "O que é DoS On-Chain?")**: Arial, 14pt, negrito, alinhado à esquerda, preto.  
-   - **Texto Normal**: Arial, 12pt, justificado, preto, espaçamento 1,15.  
-   - **Códigos Solidity**: Consolas, 10pt, fundo cinza claro (#F0F0F0), borda fina preta, recuo de 1 cm.  
-   - **Piadas/Perguntas**: Itálico, Arial, 12pt, verde escuro (#006400) para destaque.  
-   - **Citações**: Arial, 10pt, itálico, cinza (#666666), com numeração [ID] ao final.  
-3. **Tabelas**:  
-   - Para estatísticas (ex.: 5% dos hacks em 2024), crie uma tabela:  
-     - Colunas: Ano, Perdas (US$), % de Incidentes.  
-     - Formato: Bordas finas, cabeçalho em azul (#003087), fundo alternado (#F0F0F0 e branco).  
-4. **Diagramas**:  
-   - Insira um diagrama de fluxo do ataque (ex.: Atacante → Envia Lance Inválido → Trava Leilão). Use "SmartArt" (categoria "Processo") ou imagem do draw.io.  
-5. **Gráficos**:  
-   - Para perdas anuais (opcional): Gere imagem no Chart.js online (dados: 2021: 3.2; 2022: 3.8; 2023: 2.3; 2024: 1.42; 2025 H1: 3.1) e insira via "Inserir > Imagem".  
-6. **Salvar**: Arquivo > Salvar como > .docx. Para PDF, use Arquivo > Exportar > Criar PDF.  
-7. **Dicas Visuais**:  
-   - Adicione ícones (ex.: engrenagem travada para DoS) via "Inserir > Ícones".  
-   - Use caixas de texto para destacar piadas ou perguntas interativas.  
-   - Inclua uma capa com título, seu nome, e data (16/10/2025).
+## 🎯 **Conclusão: Mantendo o Motor Ligado**
 
-Este artigo é completo, didático e técnico, com foco em DoS on-chain, destacando o King of the Hill Hack (2018) e Poly Network Hack (2021), integrando estatísticas de 2025. Copie para o Word, aplique a formatação, e terá um .docx profissional pronto para a aula. Se precisar de ajustes (ex.: mais diagramas ou tabelas), é só avisar! 😊
+DoS on-chain, como no **King of the Hill Hack (2018)** e **Poly Network Hack (2021)**, trava o motor da Web3. Com **5% dos hacks** ligados a A09, a solução é clara: use **pull-over-push**, limite gas e evite dependências externas. Ferramentas como Slither, Echidna e Tenderly são as muralhas contra esses ataques. Como disse a Hacken: *"Hackers evoluem, mas devs preparados vencem!"* Vamos manter o motor ligado? 💪
+
+> ❓ *Pergunta Interativa*: "Se você fosse dev do King of the Hill, como teria evitado o DoS?"
+
+---
