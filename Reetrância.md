@@ -199,27 +199,3 @@ O ataque de reentrância ao The DAO em 2016 foi um divisor de águas: expôs as 
 *(Pergunta Interativa para Alunos: "Se você fosse dev do The DAO, como teria evitado o hack?")*
 
 ---
-
-**Instruções para Formatação no Word (para .docx)**  
-1. **Copie o texto acima** para um novo documento Microsoft Word.  
-2. **Formatação Geral**:  
-   - **Título Principal**: Arial, 16pt, negrito, centralizado, azul escuro (#003087).  
-   - **Subtítulos (ex.: "O que é Reentrância?")**: Arial, 14pt, negrito, alinhado à esquerda, preto.  
-   - **Texto Normal**: Arial, 12pt, justificado, preto, espaçamento 1,15.  
-   - **Códigos Solidity**: Consolas, 10pt, fundo cinza claro (#F0F0F0), borda fina preta, recuo de 1 cm.  
-   - **Piadas/Perguntas**: Itálico, Arial, 12pt, verde escuro (#006400) para destaque.  
-   - **Citações**: Arial, 10pt, itálico, cinza (#666666), com numeração [ID] ao final.  
-3. **Diagramas**:  
-   - Insira um diagrama de fluxo do ataque de reentrância (ex.: Contrato A → Chama Contrato B → Re-entra A). Use o recurso "SmartArt" do Word (categoria "Processo") ou insira uma imagem gerada no draw.io.  
-4. **Gráficos**:  
-   - Para estatísticas (ex.: US$ 35M em 2024), crie uma tabela no Word:  
-     - Colunas: Ano, Perdas (US$), % de Incidentes.  
-     - Formato: Bordas finas, cabeçalho em azul (#003087), fundo alternado (#F0F0F0 e branco).  
-   - Para o gráfico de perdas anuais (opcional): Gere uma imagem no Chart.js online (dados: 2021: 3.2; 2022: 3.8; 2023: 2.3; 2024: 1.42; 2025 H1: 3.1) e insira via "Inserir > Imagem".  
-5. **Salvar**: Arquivo > Salvar como > .docx. Para PDF, use Arquivo > Exportar > Criar PDF.  
-6. **Dicas Visuais**:  
-   - Adicione ícones (ex.: cadeado para segurança) via "Inserir > Ícones".  
-   - Use caixas de texto para destacar piadas ou perguntas interativas.  
-   - Inclua uma capa com título, seu nome, e data (16/10/2025).
-
-Este artigo é completo, didático e técnico, com foco no ataque de reentrância e no The DAO Hack, integrando estatísticas de 2025. Copie para o Word, aplique a formatação, e terá um .docx profissional pronto para a aula. Se precisar de ajuda com mais ajustes (ex.: diagrama específico ou tabela pronta), avise! 😊
