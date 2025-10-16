@@ -1,194 +1,195 @@
-# **Artigo: Falhas de Controle de Acesso (ACL) em Smart Contracts: Um Mergulho Profundo no Bybit Hack e Outros Casos**
 
-## **Introdução: O Cofre com a Chave Debaixo do Tapete**
 
-Em 2025, smart contracts são a espinha dorsal da Web3, gerenciando bilhões em DeFi, NFTs e dApps em blockchains como Ethereum, Solana e BNB Chain. São como cofres digitais: poderosos, mas vulneráveis se a "chave" (permissões) for mal protegida. A **falha de controle de acesso (Access Control List - ACL)**, classificada como **A01 no OWASP Smart Contract Top 10 2025**, é a vulnerabilidade mais explorada, responsável por **75% dos hacks em 2024, totalizando US$ 953 milhões em perdas**. Essas falhas ocorrem quando funções sensíveis (como `mint`, `upgrade`, `pause` ou `setOracle`) são expostas sem restrições adequadas (ex.: `onlyOwner`) ou quando chaves de administrador são mal protegidas, permitindo que atacantes assumam o controle total. Este artigo explora as falhas de ACL com uma abordagem didática e técnica, culminando na análise do **Bybit Hack de 2025**, o maior ataque de ACL recente, além de casos históricos como o Parity Wallet Hack.
+# **Artigo: Falhas de Controle de Acesso (ACL) em Smart Contracts**
 
-*(Piada para engajar: "Esqueceu de trancar o cofre? Hackers agradecem com um aperto de mão... e seus fundos!")*
+### **Um mergulho profundo no Bybit Hack e outros casos**
 
----
-
-## **O que é Falha de Controle de Acesso? (Explicação Didática)**
-
-Imagine que você tem um cofre cheio de dinheiro, mas a chave está debaixo do tapete da entrada. Qualquer um que souber onde procurar pode abrir o cofre e levar tudo! Em smart contracts, **falhas de controle de acesso (ACL)** acontecem quando funções críticas – como criar tokens (`mint`), atualizar contratos (`upgrade`), pausar operações (`pause`) ou configurar oráculos (`setOracle`) – não estão protegidas por verificações de permissão, como o modificador `onlyOwner` ou sistemas de papéis (roles). Pior ainda, se as chaves privadas de administradores forem expostas (via phishing ou má gestão), hackers ganham acesso total, como se fossem o "dono" do contrato.
-
-*(Piada: "Função sem `onlyOwner` é como deixar a porta do banco aberta com um cartaz: 'Pegue o que quiser!'")*
-
-**Como funciona na prática?** Smart contracts, escritos em Solidity, frequentemente têm funções sensíveis que controlam fundos, configurações ou lógica. Se essas funções não verificam quem as está chamando (ex.: `require(msg.sender == owner)`), qualquer endereço pode executá-las. Além disso, chaves privadas de administradores (off-chain) podem ser comprometidas por phishing ou engenharia social, permitindo que atacantes assinem transações como se fossem o dono. O resultado? Saques indevidos, minting de tokens falsos ou até controle total do contrato.
-
-**Estatísticas de Impacto**: Falhas de ACL são o maior vilão da Web3. Em 2024, representaram **75% dos incidentes de segurança**, com **US$ 953 milhões roubados**. Em 2025, o **Bybit Hack** (fevereiro) sozinho causou **US$ 1,4 bilhão em perdas**, destacando a gravidade de ACLs mal configuradas e chaves comprometidas. A combinação de erros on-chain (código vulnerável) e off-chain (phishing) faz de ACL a principal ameaça.
+> **Em uma frase:** se a permissão falha, o invasor vira “dono” — e o cofre abre por dentro.
 
 ---
 
-## **Contexto Técnico: Como Funcionam as Falhas de Controle de Acesso**
+## **Introdução — O cofre com a chave debaixo do tapete**
 
-### **Mecânica do Ataque**
-Falhas de controle de acesso ocorrem em dois cenários principais:  
-1. **On-Chain (Código Vulnerável)**: Funções sensíveis não verificam permissões, permitindo que qualquer endereço as execute. Por exemplo, uma função `sacarTudo()` sem `onlyOwner` pode ser chamada por qualquer usuário, drenando fundos. Ou uma função `mint` sem restrições pode criar tokens infinitos.  
-2. **Off-Chain (Chaves Comprometidas)**: Chaves privadas de administradores, usadas para assinar transações ou gerenciar multi-sigs, são roubadas via phishing, engenharia social ou vazamentos (ex.: carteiras mal protegidas). Isso dá ao atacante acesso a funções restritas, como se fosse o dono.
+Em **2025**, *smart contracts* seguem como espinha dorsal da **Web3**, movimentando bilhões em **DeFi, NFTs e dApps** em redes como **Ethereum**, **Solana** e **BNB Chain**. Mas cofres digitais só são seguros se as **chaves** e **permissões** forem bem protegidas. **Falhas de Controle de Acesso (ACL)** — funções sensíveis sem *guards* ou chaves administrativas comprometidas — seguem entre os vetores mais explorados. O **Bybit Hack (fev/2025)** tornou isso explícito ao se tornar **o maior roubo cripto da história (~US$ 1,4–1,5 bi)**, com forte componente de **acesso e governança de chaves**; já o **Parity Wallet Hack (2017)** mostrou como um detalhe de inicialização/ACL on-chain permite tomar contratos inteiros. ([AP News][1])
 
-**Passos de um Ataque Típico**:  
-- **Identificação**: O atacante analisa o código (público na blockchain) e encontra funções sem restrições ou verifica se chaves de admin estão expostas.  
-- **Exploração On-Chain**: Chama funções sensíveis (ex.: `sacarTudo()`, `mint()`) sem permissão.  
-- **Exploração Off-Chain**: Usa chaves roubadas para assinar transações, como transferir ownership ou drenar fundos.  
-- **Impacto**: Roubo de fundos, manipulação de tokens, ou controle total do contrato (ex.: pausar ou atualizar lógica).
+> 😄 **Para engajar:** *Função sem `onlyOwner` é como deixar a porta do banco aberta — com o letreiro “entre sem bater”.*
 
-### **Exemplo de Código Solidity Vulnerável**
+---
+
+## **O que é uma falha de controle de acesso? (explicação didática)**
+
+Pense num **cofre** cujo painel de controle tem botões “**mint**”, “**upgrade**”, “**pause**”, “**setOracle**”. Se **qualquer um** puder apertá-los (falta de `onlyOwner`/roles) — ou se **alguém roubar a sua chave** (phishing/engenharia social) — o invasor **assume o contrato**: *mint* infinito, *upgrades* maliciosos, pausas/despausas indevidas, *rug* de cofres, etc. Em sistemas multi-sig, **comprometer N de M assinaturas** equivale a **ser o dono** temporário das ações críticas. Esse é o coração das falhas de **ACL**: **quem pode fazer o quê** — no **código** e na **operação**.
+
+---
+
+## **Mecânica das falhas de ACL (on-chain e off-chain)**
+
+* **On-chain (código):** funções críticas sem verificadores de permissão (`onlyOwner`, `AccessControl`) ou padrões mal implementados (ex.: inicialização aberta, *delegatecall* sem *guard*).
+* **Off-chain (operações/chaves):** comprometimento de **chaves privadas** (phishing, malware, aprovação cega), falhas de processo em **multi-sig/MPC**, janelas sem **timelock**, ou **aprovações** assinadas sem *out-of-band* verification.
+
+**Fluxo típico do ataque**
+
+1. **Recon**: o invasor lê o código on-chain e/ou mapeia chaves/assinantes.
+2. **Exploração on-chain**: chama **funções sem *guard*** (ex.: `mint`, `upgradeTo`, `setOwner`).
+3. **Exploração off-chain**: usa **chaves roubadas** para assinar operações administrativas (ex.: *ownership transfer*, *pause/unpause*, *sweeps*).
+4. **Efeito**: **dreno de fundos**, *mint* inflacionário ou **controle total** do protocolo.
+
+---
+
+## **Exemplo em Solidity — vulnerável vs. seguro**
+
+### ❌ **ACL vulnerável (sem verificador)**
+
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 contract CofreVulneravel {
     address public dono;
-    uint public fundos;
+    uint256 public fundos;
 
-    constructor() {
-        dono = msg.sender;
+    constructor() { dono = msg.sender; }
+
+    function depositar() external payable { fundos += msg.value; }
+
+    function sacarTudo() external {              // ❌ sem onlyOwner
+        (bool ok, ) = msg.sender.call{value: fundos}("");
+        require(ok, "falha envio");
         fundos = 0;
     }
 
-    function depositar() public payable {
-        fundos += msg.value;
-    }
-
-    function sacarTudo() public { // Vulnerável: Sem onlyOwner!
-        (bool sucesso, ) = msg.sender.call{value: fundos}("");
-        require(sucesso, "Falha no envio");
-        fundos = 0;
-    }
-
-    function atualizarDono(address novoDono) public { // Sem verificação!
-        dono = novoDono;
+    function atualizarDono(address novo) external { // ❌ qualquer um vira dono
+        dono = novo;
     }
 }
 ```
 
-**Como o ataque funciona?**  
-- **Cenário 1 (On-Chain)**: Qualquer endereço chama `sacarTudo()` e drena os fundos, já que não há verificação de `onlyOwner`. Ou chama `atualizarDono()` para se tornar o dono, assumindo controle total.  
-- **Cenário 2 (Off-Chain)**: Se a chave privada do `dono` for roubada (ex.: via phishing), o atacante assina transações como o dono, chamando funções restritas (ex.: saque ou transferência de ownership).  
-- **Exploração**: Um atacante pode chamar `sacarTudo()` repetidamente ou transferir o `dono` para si mesmo, drenando o contrato ou manipulando sua lógica.
+### ✅ **ACL correta (Ownable + timelock opcional)**
 
-**Contrato Atacante (Hipotético)**:
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Atacante {
-    CofreVulneravel public cofre;
+contract CofreSeguro is Ownable {
+    uint256 public fundos;
 
-    constructor(address _cofre) {
-        cofre = CofreVulneravel(_cofre);
+    function depositar() external payable { fundos += msg.value; }
+
+    function sacarTudo() external onlyOwner {
+        uint256 v = fundos; fundos = 0;
+        (bool ok, ) = owner().call{value: v}("");
+        require(ok, "falha");
     }
 
-    function atacar() public {
-        cofre.sacarTudo(); // Chama função vulnerável
-        cofre.atualizarDono(address(this)); // Assume controle
+    function atualizarDono(address novo) external onlyOwner {
+        _transferOwnership(novo);
     }
 }
 ```
 
-**Por que é perigoso?** A transparência da blockchain permite que atacantes vejam o código e explorem funções desprotegidas. Além disso, a má gestão de chaves privadas (ex.: armazenadas em carteiras quentes ou comprometidas por phishing) amplifica o risco, especialmente em sistemas multi-sig ou contratos atualizáveis.
+### ✅ **Papéis granulares (AccessControl)**
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract CofreComRoles is AccessControl {
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
+
+    constructor(address admin) {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(PAUSER_ROLE, admin);
+        _grantRole(TREASURER_ROLE, admin);
+    }
+
+    function pause() external onlyRole(PAUSER_ROLE) { /* ... */ }
+    function withdraw(uint256 v, address to) external onlyRole(TREASURER_ROLE) { /* ... */ }
+}
+```
+
+> ✅ **Boas práticas:** **Ownable/AccessControl**, **timelock + multisig** para ações críticas, **separação de funções**, **pausable** para emergências, e **auditorias** focadas em caminhos administrativos.
 
 ---
 
-## **Casos Reais: Bybit Hack (2025) e Parity Wallet Hack (2017)**
+## **Caso 1 — Bybit Hack (fev/2025): acesso, governança de chaves e o maior roubo cripto**
 
-### **Bybit Hack (Fevereiro de 2025)**  
-- **Contexto**: Bybit, uma exchange CeFi com integração DeFi, gerenciava bilhões em ativos, incluindo pontes cross-chain e carteiras multi-sig. O sistema usava smart contracts para gerenciar transações e permissões administrativas.  
-- **Ataque**: Uma falha de controle de acesso em um contrato multi-sig permitiu que um atacante comprometesse chaves privadas de administradores via engenharia social (phishing sofisticado com AI).  
-- **Como funcionou?**:  
-  - O atacante obteve acesso a chaves de 2/3 dos signatários do multi-sig, explorando e-mails falsos que pareciam vir de membros da equipe.  
-  - Usando as chaves, o atacante assinou uma transação que transferiu o ownership do contrato principal para si mesmo.  
-  - Com controle total, drenou **US$ 1,4 bilhão** em ativos, incluindo ETH, BTC e tokens ERC-20, em uma única transação.  
-- **Impacto**:  
-  - Maior hack de 2025, representando 45% das perdas totais de H1 2025.  
-  - A Bybit pausou operações, perdeu 30% do TVL, e enfrentou ações judiciais.  
-  - Abalou a confiança em exchanges CeFi com integração DeFi, levando a uma queda de 20% no mercado de cripto em uma semana.  
-- **Lição**:  
-  - **On-Chain**: Use sistemas de papéis (ex.: OpenZeppelin AccessControl) para multi-sig robusto, exigindo múltiplas aprovações.  
-  - **Off-Chain**: Implemente autenticação multifator (MFA) e hardware wallets (ex.: Ledger) para chaves de admin.  
-  - **Auditorias**: Monitore transações com ferramentas como Tenderly e treine equipes contra phishing com AI.
+**Contexto (CeFi + contratos/fluxos on-chain):** A *exchange* **Bybit** sofreu, em **21 de fevereiro de 2025**, **o maior roubo cripto já registrado**: cerca de **US$ 1,4–1,5 bilhão** em **ETH e ativos correlatos**. O episódio ocorreu durante **transferência rotineira** entre carteiras (*cold → warm*), e resultou em **perda maciça** e corrida de saques; a empresa afirmou ter **cobertura** e prometeu ressarcimentos. **FBI** atribuiu a autoria à **Coreia do Norte** (*TraderTraitor/Lazarus*). ([AP News][1])
 
-### **Parity Wallet Hack (2017)**  
-- **Contexto**: Parity, uma carteira multi-sig na Ethereum, era usada para armazenar ETH com segurança. O contrato dependia de uma biblioteca compartilhada para funções críticas.  
-- **Ataque**: Uma falha de ACL na inicialização da biblioteca permitiu que qualquer usuário chamasse funções restritas, como `initWallet`, tornando-se o "dono".  
-- **Como funcionou?**:  
-  - O contrato de biblioteca não restringiu a função `initWallet`, que reinicializava o dono.  
-  - Um atacante chamou `initWallet`, assumindo controle, e usou funções como `execute` para transferir **US$ 31 milhões em ETH**.  
-- **Impacto**:  
-  - Perdas diretas de US$ 31M; confiança na Parity abalada.  
-  - Um segundo incidente (relacionado a `selfdestruct`) congelou US$ 280M, mas o primeiro foi puro ACL.  
-  - Acelerou o desenvolvimento de padrões de segurança para bibliotecas e multi-sigs.  
-- **Lição**:  
-  - Use modificadores como `onlyOwner` em todas as funções sensíveis.  
-  - Teste bibliotecas extensivamente, garantindo inicialização segura.
+**O que falhou (resumo técnico de acesso/assinaturas):**
+Relatos independentes descrevem **subversão do processo de aprovação** de transações de *cold wallet* (alteração do que os signatários viam), e/ou **engenharia social** para capturar quórum de **assinaturas**. Em ambos os cenários, o **controle efetivo** das ações críticas foi tomado: **assinaturas válidas** autorizaram a transferência de centenas de milhares de ETH para endereços dos invasores — um colapso prático de **ACL operacional** (governança de chaves) mesmo sem bug direto de Solidity. ([NCC Group][2])
+
+**Impacto e repercussão:**
+
+* **Financeiro:** ~**US$ 1,4–1,5 bi** drenados; maior roubo registrado. ([AP News][1])
+* **Operacional:** picos de **withdrawals** e medidas de contingência; *bounty/reward* por recuperação. ([The Guardian][3])
+* **Atribuição:** **FBI** e análises de risco apontaram **DPRK/Lazarus**. ([Reuters][4])
+* **Lição central:** **ACL ≠ só Solidity** — é **código + chaves + processo** (MFA/HSM/MPC, revisão fora de banda, timelocks).
 
 ---
 
-## **Prevenção Moderna contra Falhas de Controle de Acesso (2025)**
+## **Caso 2 — Parity Wallet Hack (2017): ACL on-chain e inicialização**
 
-### **Boas Práticas Técnicas**
-- **Modificadores de Acesso**: Use `onlyOwner` (OpenZeppelin Ownable) ou sistemas de papéis (`AccessControl`) para funções sensíveis.  
-  ```solidity
-  // SPDX-License-Identifier: MIT
-  pragma solidity ^0.8.0;
-  import "@openzeppelin/contracts/access/Ownable.sol";
+**Contexto:** *Multisig wallet* amplamente usada no ecossistema Ethereum.
+**Vetor:** **Inicialização/ACL** em biblioteca compartilhada (uso de `delegatecall`). Uma função de **setup** pôde ser chamada indevidamente, permitindo **tomar *ownership*** e, no episódio de julho/2017, **drenar ~US$ 30–31 milhões em ETH**. Meses depois, outro incidente distinto (“freeze”) congelou centenas de milhões por **`selfdestruct`** em biblioteca — ambos ressaltando **governança de código e ACL**. ([CoinDesk][5])
 
-  contract CofreSeguro is Ownable {
-      uint public fundos;
-
-      function sacarTudo() public onlyOwner { // Restrito!
-          (bool sucesso, ) = msg.sender.call{value: fundos}("");
-          require(sucesso, "Falha");
-          fundos = 0;
-      }
-  }
-  ```  
-- **Multi-Sig**: Exija múltiplas assinaturas para ações críticas (ex.: Gnosis Safe).  
-- **Gestão de Chaves**: Armazene chaves privadas em hardware wallets (ex.: Ledger, Trezor) e use MFA para acesso.  
-- **Pausabilidade**: Adicione funções `pause`/`unpause` restritas a admins para emergências.  
-- **Auditorias**: Contrate firmas como Halborn (92% de detecção) para revisar permissões.  
-
-### **Ferramentas de Prevenção**
-- **Slither/Mythril**: Detectam funções desprotegidas (92% eficaz).  
-- **Tenderly**: Monitora transações suspeitas em tempo real.  
-- **Fuzzing (Echidna)**: Simula chamadas não autorizadas.  
-- **Bounties**: Immunefi pagou US$ 52K em média por bugs de ACL em 2024.  
-
-### **Tendências em 2025**
-Falhas de ACL continuam dominando (75% dos hacks), impulsionadas por erros on-chain (código mal projetado) e off-chain (phishing com AI, 56,5% das perdas). A ascensão de contratos atualizáveis e pontes cross-chain aumenta o risco, mas ferramentas de IA e multi-sigs robustos prometem reduzir perdas em 20% até 2026. O Bybit Hack destacou a necessidade de proteger chaves privadas e validar permissões.
+**Lição central:** funções de **inicialização** e **admin** **jamais** ficam expostas; uso de **Initializable**, *guards* de *upgrade*, e **separação de admin** (proxy *transparent*/UUPS + **timelock**/**multisig**).
 
 ---
 
-## **Conclusão: Blindando o Cofre Digital**
+## **Prevenção moderna (2025) — do código ao processo**
 
-Falhas de controle de acesso, como as vistas no Bybit Hack (2025) e Parity Wallet Hack (2017), mostram o poder devastador de permissões mal configuradas e chaves comprometidas. São como deixar a porta do banco aberta ou a chave nas mãos erradas. Com **75% dos hacks em 2024** ligados a ACL, a lição é clara: segurança começa com design robusto (modificadores, multi-sig) e gestão cuidadosa de chaves (hardware wallets, MFA). Ferramentas como Slither e práticas como auditorias contínuas são as muralhas da Web3. Como disse a Hacken: "Hackers evoluem, mas devs preparados vencem!" Vamos trancar o cofre?
+### **No código (on-chain)**
 
-*(Pergunta Interativa para Alunos: "Se você fosse admin da Bybit, como protegeria as chaves?")*
+* **Ownable/AccessControl** para toda função sensível; **separação de papéis** (admin vs. tesouraria vs. oráculo).
+* **Timelock + Pausable** em operações críticas (tempo de reação e *circuit breaker*).
+* **Inicialização segura** em proxies (OpenZeppelin **Initializable**, `initializer`/`reinitializer`).
+* **Auditorias** focadas em **caminhos administrativos**, *upgradeability* e *delegatecall*.
+
+### **Na operação (off-chain)**
+
+* **MFA + hardware wallets/HSM** para chaves de *signers*.
+* **MPC/multisig** com **quórum robusto** e **políticas de rotação**; **revisão fora de banda** do destino/valor.
+* **Controles de mudança** (4-olhos, segregação de funções) e **monitoramento** (alertas de grande risco).
+* **Playbooks** de resposta (pausa, *address blocklists*, comunicação, *bounty*).
 
 ---
 
-## **Instruções para Formatação no Word (para .docx)**  
-1. **Copie o texto acima** para um novo documento Microsoft Word.  
-2. **Formatação Geral**:  
-   - **Título Principal**: Arial, 16pt, negrito, centralizado, azul escuro (#003087).  
-   - **Subtítulos (ex.: "O que é Falha de Controle de Acesso?")**: Arial, 14pt, negrito, alinhado à esquerda, preto.  
-   - **Texto Normal**: Arial, 12pt, justificado, preto, espaçamento 1,15.  
-   - **Códigos Solidity**: Consolas, 10pt, fundo cinza claro (#F0F0F0), borda fina preta, recuo de 1 cm.  
-   - **Piadas/Perguntas**: Itálico, Arial, 12pt, verde escuro (#006400) para destaque.  
-   - **Citações**: Arial, 10pt, itálico, cinza (#666666), com numeração [ID] ao final.  
-3. **Tabelas**:  
-   - Para estatísticas (ex.: US$ 953M em 2024), crie uma tabela:  
-     - Colunas: Ano, Perdas (US$), % de Incidentes.  
-     - Formato: Bordas finas, cabeçalho em azul (#003087), fundo alternado (#F0F0F0 e branco).  
-4. **Diagramas**:  
-   - Insira um diagrama de fluxo do ataque ACL (ex.: Atacante → Chama `sacarTudo()` → Drena fundos). Use "SmartArt" (categoria "Processo") ou imagem do draw.io.  
-5. **Gráficos**:  
-   - Para perdas anuais (opcional): Gere imagem no Chart.js online (dados: 2021: 3.2; 2022: 3.8; 2023: 2.3; 2024: 1.42; 2025 H1: 3.1) e insira via "Inserir > Imagem".  
-6. **Salvar**: Arquivo > Salvar como > .docx. Para PDF, use Arquivo > Exportar > Criar PDF.  
-7. **Dicas Visuais**:  
-   - Adicione ícones (ex.: cadeado para ACL) via "Inserir > Ícones".  
-   - Use caixas de texto para destacar piadas ou perguntas interativas.  
-   - Inclua uma capa com título, seu nome, e data (16/10/2025).
+## **Checklist rápido (para colar no repositório)**
 
-Este artigo é completo, didático e técnico, com foco em falhas de controle de acesso, destacando o Bybit Hack (2025) e o Parity Wallet Hack (2017), integrando estatísticas de 2025. Copie para o Word, aplique a formatação, e terá um .docx profissional pronto para a aula. Se precisar de ajustes (ex.: mais diagramas ou tabelas), é só avisar! 😊
+1. **Mapeie funções críticas** → `onlyOwner`/**roles** obrigatórios.
+2. **Exija timelock + multisig** para *upgrade/mint/sweeps*.
+3. **Proteja inicialização** (proxies/libraries) e valide *admin*.
+4. **Hardening de chaves**: MFA, HSM/MPC, rotação, *air-gapped*.
+5. **Testes/adversarial**: simule chamadas não autorizadas e *role escalation*.
+6. **Monitoramento**: alertas para *admin ops*; *dry-run* fora de banda.
+7. **Auditorias recorrentes** e **bug bounty** ativos.
+
+---
+
+## **Conclusão — Blindando o cofre digital**
+
+**ACL é o “gate” da Web3**. O **Bybit Hack (2025)** mostrou que **quebras de acesso** (mesmo fora do Solidity) podem superar qualquer bug clássico; o **Parity (2017)** ensinou que **um init aberto** equivale a **entregar a chave**. Segurança real é **socio-técnica**: **código**, **chaves** e **processos**.
+Com **Ownable/AccessControl**, **timelocks**, **multisig/MPC**, **auditorias** e **treinamento anti-phishing**, dá para transformar o cofre de vidro em um **cofre de titânio** — e manter a inovação, sem abrir mão da proteção.
+
+> ❓ **Para a turma:** *Se você fosse o responsável por chaves e ACLs hoje, que 3 defesas implementaria antes do próximo deploy?*
+
+---
+
+### **Apêndice — Formatação sugerida (se for para .docx/PDF)**
+
+* **Título:** Arial 16 pt, **negrito**, centralizado, azul-escuro (#003087).
+* **Subtítulos (H2/H3):** Arial 14/12 pt, **negrito**.
+* **Corpo:** Arial 12 pt, justificado, 1,15.
+* **Código:** Consolas 10 pt, fundo cinza (#F4F6F8), borda fina, recuo 1 cm.
+* **Callouts (💡/⚠️/✅):** itálico, cinza #555; caixas “**Lição aprendida**”.
+
+---
+
+## **Fontes (seleção)**
+
+* **Bybit (fev/2025):** relatos de ~US$ 1,4–1,5 bi; contexto, atribuição FBI à DPRK; dinâmica da transferência *cold→warm* e corrida de saques. ([AP News][1])
+* **Análises adicionais (Bybit):** TRM Labs (mapeamento de fluxos), NCC Group (mecânica de aprovação/assinatura), análises jurídicas/regulatórias. ([TRM Labs][6])
+* **Parity Wallet (2017):** perdas (~US$ 30–31M) por ACL/inicialização; “freeze” posterior (congelamento de centenas de milhões). ([CoinDesk][5])
