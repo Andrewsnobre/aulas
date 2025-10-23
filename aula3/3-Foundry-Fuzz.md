@@ -1,6 +1,3 @@
-Entendi que você quer uma explicação mais detalhada sobre como o **fuzzing (testFuzz)** funciona no exemplo que forneci anteriormente, especialmente no contexto do contrato `Storage` e do teste `testFuzz_setNumber`. Vou melhorar a explicação, detalhando o mecanismo, o propósito e como ele testa o exemplo acima, de forma clara e adaptada para seus alunos. Vamos por partes!
-
----
 
 ## O que é Fuzzing (testFuzz) em Foundry?
 
@@ -116,5 +113,3 @@ O `runs: 256` indica quantas iterações de fuzzing foram feitas (pode variar co
 
 ## Conclusão
 O `testFuzz` no exemplo acima testa exaustivamente a função `setNumber` com uma variedade de entradas, garantindo que ela funcione corretamente em todos os casos válidos de `uint256`. Essa técnica é poderosa para contratos reais (ex.: DeFi, NFTs), onde bugs podem custar milhões. Para seus alunos, enfatize que o fuzzing é como um "caçador de bugs automático" – quanto mais complexo o contrato, mais valioso ele se torna!
-
-Se quiser, posso criar um exemplo mais complexo com vulnerabilidades reais para demonstrar falhas detectadas pelo fuzzing. O que acha? 😊
