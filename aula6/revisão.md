@@ -1,5 +1,5 @@
 # 📘 Segurança em Smart Contracts: O Guia  como História  
-**Revisão completa para a prova 
+Revisão completa para a prova 
 ---
 
 Imagine que você acabou de deployar seu primeiro contrato de DeFi na mainnet. É um vault simples: usuários depositam ETH, o contrato consulta o preço do token em uma pool da Uniswap, calcula recompensas e permite saque com bônus. Tudo testado na Goerli. Tudo perfeito.  
