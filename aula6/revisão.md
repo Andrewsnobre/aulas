@@ -8,7 +8,7 @@ Três horas depois, o saldo do contrato é zero.
 
 Como isso aconteceu?  
 
-Vamos descobrir **juntos**, como se estivéssemos debugando ao vivo — e, no caminho, você vai absorver tudo o que precisa para a prova, sem perceber que está revisando.
+Vamos descobrir **juntos**, como se estivéssemos debugando ao vivo — e, no caminho, vmaos  absorver tudo o que precisamos para a prova, sem perceber que estamos revisando.
 
 ---
 
