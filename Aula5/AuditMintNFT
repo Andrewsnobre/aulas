@@ -26,7 +26,7 @@ contract AuditMintNFT {
 
   
     modifier onlyOwner() {
-        require(tx.origin == owner, "not owner"); // <- VULN
+        require(tx.origin == owner, "not owner"); 
         _;
     }
 
